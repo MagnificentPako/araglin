@@ -9,6 +9,7 @@ module Source ( FictionSource(..)
               ) where
 
 import           Control.Monad.Fraxl
+import           Control.Monad.IO.Class
 
 data ChapterContent = ChapterContent { chapterName    :: String
                                      , chapterContent :: [String]

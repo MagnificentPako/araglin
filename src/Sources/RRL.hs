@@ -1,32 +1,34 @@
-{-# LANGUAGE FlexibleContexts  #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE GADTs             #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE FlexibleInstances         #-}
+{-# LANGUAGE GADTs                     #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 
 
 module Sources.RRL (fetchRRL) where
 
-import           Control.Lens               ((^.))
+import           Control.Lens              ((^.))
 import           Control.Monad.Fraxl
 import           Control.Monad.IO.Class
-import qualified Data.ByteString.Lazy.Char8 as B (unpack)
-import           Data.Char                  (isPrint)
+import qualified Data.ByteString.Lazy.UTF8 as B (toString)
+import           Data.Char                 (isPrint)
 import           Data.List
-import           Data.List.Split            (splitOn)
+import           Data.List.Split           (splitOn)
 import           Network.Wreq
+import qualified Network.Wreq.Session      as S
 import           Source
 import           Text.HTML.TagSoup
 import           Util
 
-fetchRRL :: MonadIO m => Fetch FictionSource m a
-fetchRRL = simpleAsyncFetch simpleFetch
+fetchRRL :: MonadIO m => S.Session -> Fetch FictionSource m a
+fetchRRL s = simpleAsyncFetch $ simpleFetch s
     where
-        simpleFetch :: FictionSource a -> IO a
-        simpleFetch (Chapter cid) = fetchChapter cid
-        simpleFetch (Fiction fid) = fetchFiction fid
+        simpleFetch :: S.Session -> FictionSource a -> IO a
+        simpleFetch s (Chapter cid) = fetchChapter cid s
+        simpleFetch s (Fiction fid) = fetchFiction fid s
 
-fetchFiction fid = do
-    rsp <- get $ "https://www.royalroad.com/fiction/" ++ fid
-    let body     = B.unpack $ rsp ^. responseBody
+fetchFiction fid s = do
+    rsp <- S.get s $ "https://www.royalroad.com/fiction/" ++ fid
+    let body     = B.toString $ rsp ^. responseBody
         tags     = parseTags body
         author   = extractAuthor tags
         title    = extractTitle tags
@@ -36,9 +38,9 @@ fetchFiction fid = do
                          , fictionChapterIDs = chapters
                          }
 
-fetchChapter cid = do
-    rsp <- get $ "https://www.royalroad.com/fiction/chapter/" ++ cid
-    let body    =  B.unpack $ rsp ^. responseBody
+fetchChapter cid s = do
+    rsp <- S.get s $ "https://www.royalroad.com/fiction/chapter/" ++ cid
+    let body    =  B.toString $ rsp ^. responseBody
         tags    = parseTags body
         content = extractChapterContent tags
         title   = extractChapterTitle tags
