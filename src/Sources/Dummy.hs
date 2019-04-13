@@ -10,7 +10,7 @@ fetchDummy :: MonadIO m => Fetch FictionSource m a
 fetchDummy = simpleAsyncFetch simpleFetch
     where
         simpleFetch :: FictionSource a -> IO a
-        simpleFetch (Chapter cid) = do
+        simpleFetch (Chapter cid _) = do
             return ChapterContent { chapterName    = "Dummy Chapter"
                                   , chapterContent = ["Dummy Content"]
                                   }

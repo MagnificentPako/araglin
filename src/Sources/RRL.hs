@@ -6,16 +6,17 @@
 
 module Sources.RRL (fetchRRL) where
 
-import           Control.Lens              ((^.))
+import           Control.Lens                 ((^.))
 import           Control.Monad.Fraxl
 import           Control.Monad.IO.Class
-import qualified Data.ByteString.Lazy.UTF8 as B (toString)
-import           Data.Char                 (isPrint)
+import qualified Data.ByteString.Lazy.UTF8    as B (toString)
+import           Data.Char                    (isPrint)
 import           Data.List
-import           Data.List.Split           (splitOn)
+import           Data.List.Split              (splitOn)
 import           Network.Wreq
-import qualified Network.Wreq.Session      as S
+import qualified Network.Wreq.Session         as S
 import           Source
+import           System.Console.AsciiProgress
 import           Text.HTML.TagSoup
 import           Util
 
@@ -23,8 +24,9 @@ fetchRRL :: MonadIO m => S.Session -> Fetch FictionSource m a
 fetchRRL s = simpleAsyncFetch $ simpleFetch s
     where
         simpleFetch :: S.Session -> FictionSource a -> IO a
-        simpleFetch s (Chapter cid) = fetchChapter cid s
-        simpleFetch s (Fiction fid) = fetchFiction fid s
+        simpleFetch s (Chapter cid Nothing)   = fetchChapter cid s
+        simpleFetch s (Chapter cid (Just pg)) = fetchChapter' cid s pg
+        simpleFetch s (Fiction fid)           = fetchFiction fid s
 
 fetchFiction fid s = do
     rsp <- S.get s $ "https://www.royalroad.com/fiction/" ++ fid
@@ -37,6 +39,11 @@ fetchFiction fid s = do
                          , fictionAuthor     = author
                          , fictionChapterIDs = chapters
                          }
+
+fetchChapter' cid s pg = do
+    a <- fetchChapter cid s
+    tick pg
+    return a
 
 fetchChapter cid s = do
     rsp <- S.get s $ "https://www.royalroad.com/fiction/chapter/" ++ cid

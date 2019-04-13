@@ -30,6 +30,7 @@ executable araglin
                        containers >= 0.5,
                        utf8-string >=1.0,
                        http-client >= 0.5,
-                       http-client-tls >= 0.3
+                       http-client-tls >= 0.3,
+                       ascii-progress >= 0.3
   hs-source-dirs:      src
   default-language:    Haskell2010
