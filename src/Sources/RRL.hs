@@ -6,6 +6,7 @@
 
 module Sources.RRL (fetchRRL) where
 
+import           Control.Concurrent           (threadDelay)
 import           Control.Lens                 ((^.))
 import           Control.Monad.Fraxl
 import           Control.Monad.IO.Class
@@ -46,6 +47,7 @@ fetchChapter' cid s pg = do
     return a
 
 fetchChapter cid s = do
+    threadDelay 100
     rsp <- S.get s $ "https://www.royalroad.com/fiction/chapter/" ++ cid
     let body    =  B.toString $ rsp ^. responseBody
         tags    = parseTags body

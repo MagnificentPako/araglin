@@ -2,11 +2,12 @@
 
 module Main where
 
+import qualified Codec.Binary.UTF8.String     as UTF8
 import           Control.Monad
 import           Control.Monad.Fraxl
 import           Control.Monad.IO.Class
 import qualified Data.ByteString.Lazy.Char8   as B
-import           EpubBuilder
+import qualified Epub.Builder                 as Builder
 import qualified Network.HTTP.Client          as H
 import qualified Network.HTTP.Client.TLS      as T
 import qualified Network.Wreq.Session         as S
@@ -31,12 +32,14 @@ main = displayConsoleRegions $ do
             "rrl"   -> fetchRRL session
             "dummy" -> fetchDummy
             _       -> fetchDummy
+    let uuid = "book-id"
     fic <- runFraxl (fetcher) (fraxlFiction (args !! 1))
-    epub <- buildEpub fic
+    let epub = Builder.archiveFromFiction fic uuid
     B.writeFile (args !! 2) epub
 
+
 fraxlFiction fid = do
-    f <- fiction $ fid
+    f <- fiction fid
     pg <- liftIO $ newProgressBar def
         { pgTotal = toInteger . length . fictionChapterIDs $ f
         , pgFormat = "Downloading '" ++ fictionTitle f ++ "' :percent [:bar] (:current/:total)"
